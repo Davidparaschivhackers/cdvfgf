@@ -1,0 +1,61 @@
+ 
+-- Function to create a Roblox-style notification
+local function createNotification(message)
+    starterGui:SetCore("SendNotification", {
+        Title = "No-Clip";
+        Text = message;
+        Duration = 2; -- Duration of the notification
+    })
+end
+ 
+-- Function to apply No-Clip to the character
+local function applyNoClip(character)
+    if not character then return end
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+            part.CanCollide = not noClip
+        end
+    end
+    if character:FindFirstChild("HumanoidRootPart") then
+        character.HumanoidRootPart.CanCollide = not noClip
+    end
+end
+ 
+-- Function to enable/disable No-Clip mode
+local function setNoClip(enabled)
+    noClip = enabled
+    applyNoClip(player.Character)
+    if noClipButton then
+        noClipButton.Text = "No-Clip: " .. (noClip and "Enabled" or "Disabled")
+        noClipButton.BackgroundColor3 = noClip and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+    end
+    print("No-Clip " .. (noClip and "Enabled" or "Disabled"))
+end
+ 
+-- Function to toggle No-Clip mode
+function toggleNoClip()
+    setNoClip(not noClip)
+end
+ 
+-- Function to start dragging
+local function startDragging(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Target.Parent == menuGui then
+        dragging = true
+        dragStart = input.Position
+        startPos = menuGui.Position
+    end
+end
+ 
+-- Function to stop dragging
+local function stopDragging()
+    dragging = false
+end
+ 
+-- Function to update dragging position
+local function updateDragging(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        menuGui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end
+ 
