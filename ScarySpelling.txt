@@ -62,6 +62,10 @@ local Section = Tab:NewSection("bureaucracy")
 
 local Section = Tab:NewSection("hypothermic")
 
+local Section = Tab:NewSection("cartography")
+
+local Section = Tab:NewSection("hydroelectric")
+
 local Section = Tab:NewSection("surveillance")
 
 local Section = Tab:NewSection("electricity")
