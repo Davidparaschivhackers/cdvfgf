@@ -1,7 +1,7 @@
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/BlizTBr/scripts/refs/heads/main/Orion%20X'))()
 
 local Window = OrionLib:MakeWindow({
-    Name = "🎯 Murder Vs. Sheriff DUELS Release 1.0 🎯", 
+    Name = "🎯 MVSD XENO ELITE DEV (Prelease 1.7) 🎯", 
     HidePremium = true, 
     SaveConfig = true, 
     ConfigFolder = "MVSD_Xeno_Configs", 
@@ -20,11 +20,10 @@ _G.SpeedValue = 16
 _G.InfJump = false
 _G.Noclip = false
 _G.RainbowESP = false
-local SelectedOpponent = ""
 
 -- [[ 1. COMBAT TAB ]] --
 local CombatTab = Window:MakeTab({Name = "Combat", Icon = "rbxassetid://6718318138"})
-local CombatSec = CombatTab:AddSection({Name = "GunController Injection"})
+local CombatSec = CombatTab:AddSection({Name = "GunController Mods"})
 
 CombatSec:AddToggle({
     Name = "No Recoil", 
@@ -62,6 +61,7 @@ PlayerTab:AddToggle({
     Default = false, 
     Callback = function(v) 
         _G.SpeedEnabled = v 
+        -- FIX: Instantly resets speed when toggled OFF
         if not v then
             pcall(function()
                 game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
@@ -114,6 +114,7 @@ ConfigTab:AddButton({Name = "Destroy UI", Callback = function() OrionLib:Destroy
 local LP = game.Players.LocalPlayer
 local ShootRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):FindFirstChild("ShootGun")
 
+-- NO RECOIL / MASS SHOOT REMOTE HOOK
 local OldNamecall; OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     local args = {...}
     if self == ShootRemote and getnamecallmethod() == "FireServer" then
@@ -124,6 +125,7 @@ local OldNamecall; OldNamecall = hookmetamethod(game, "__namecall", function(sel
     return OldNamecall(self, ...)
 end)
 
+-- RECOIL MEMORY SCANNER (Targeting GunController)
 task.spawn(function()
     while task.wait(0.5) do
         if _G.NoRecoil then
@@ -136,6 +138,7 @@ task.spawn(function()
     end
 end)
 
+-- MOVEMENT ENGINE (High Priority)
 game:GetService("RunService").RenderStepped:Connect(function()
     if LP.Character and LP.Character:FindFirstChild("Humanoid") then
         if _G.SpeedEnabled then 
@@ -149,6 +152,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
     end
 end)
 
+-- ESP & HITBOX SYNC
 task.spawn(function()
     while task.wait(0.1) do
         local color = _G.RainbowESP and Color3.fromHSV(tick() % 5 / 5, 1, 1) or Color3.fromRGB(0, 170, 255)
