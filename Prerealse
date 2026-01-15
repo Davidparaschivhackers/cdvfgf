@@ -1,0 +1,174 @@
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/BlizTBr/scripts/refs/heads/main/Orion%20X'))()
+
+local Window = OrionLib:MakeWindow({
+    Name = "🎯 MVSD XENO ELITE DEV (Prelease 1.7) 🎯", 
+    HidePremium = true, 
+    SaveConfig = true, 
+    ConfigFolder = "MVSD_Xeno_Configs", 
+    IntroText = "Xeno Elite Dev Loading..."
+})
+
+-- [[ GLOBAL STATE ]] --
+_G.MassShoot = 1
+_G.NoRecoil = false
+_G.Hitbox = false
+_G.HSize = 2
+_G.ESP = false
+_G.Names = false
+_G.SpeedEnabled = false
+_G.SpeedValue = 16
+_G.InfJump = false
+_G.Noclip = false
+_G.RainbowESP = false
+local SelectedOpponent = ""
+
+-- [[ 1. COMBAT TAB ]] --
+local CombatTab = Window:MakeTab({Name = "Combat", Icon = "rbxassetid://6718318138"})
+local CombatSec = CombatTab:AddSection({Name = "GunController Injection"})
+
+CombatSec:AddToggle({
+    Name = "No Recoil", 
+    Default = false, 
+    Callback = function(v) _G.NoRecoil = v end
+})
+
+CombatSec:AddSlider({
+    Name = "Mass Shoot", 
+    Min = 1, Max = 10, Default = 1, 
+    Callback = function(v) _G.MassShoot = v end
+})
+
+local HitSec = CombatTab:AddSection({Name = "Hitbox Expander"})
+HitSec:AddToggle({Name = "Enable Hitboxes", Default = false, Callback = function(v) _G.Hitbox = v end})
+HitSec:AddSlider({Name = "Size", Min = 2, Max = 50, Default = 2, Callback = function(v) _G.HSize = v end})
+
+-- [[ 2. VISUALS TAB ]] --
+local VisualTab = Window:MakeTab({Name = "Visuals", Icon = "rbxassetid://78134819718605"})
+VisualTab:AddToggle({Name = "ESP Boxes", Default = false, Callback = function(v) _G.ESP = v end})
+VisualTab:AddToggle({Name = "Player Names", Default = false, Callback = function(v) _G.Names = v end})
+VisualTab:AddToggle({Name = "Rainbow Visuals", Default = false, Callback = function(v) _G.RainbowESP = v end})
+VisualTab:AddSlider({
+    Name = "Field of View (FOV)", 
+    Min = 70, Max = 120, Default = 70, 
+    Callback = function(v) workspace.CurrentCamera.FieldOfView = v end
+})
+
+-- [[ 3. LOCALPLAYER TAB ]] --
+local PlayerTab = Window:MakeTab({Name = "LocalPlayer", Icon = "rbxassetid://16140823621"})
+PlayerTab:AddSection({Name = "⚠️ Tip: Jump With Noclip Off it Will Cancel!"})
+
+PlayerTab:AddToggle({
+    Name = "WalkSpeed Enable", 
+    Default = false, 
+    Callback = function(v) 
+        _G.SpeedEnabled = v 
+        if not v then
+            pcall(function()
+                game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+            end)
+        end
+    end
+})
+PlayerTab:AddSlider({Name = "Speed Value", Min = 16, Max = 250, Default = 16, Callback = function(v) _G.SpeedValue = v end})
+PlayerTab:AddToggle({Name = "Noclip", Default = false, Callback = function(v) _G.Noclip = v end})
+PlayerTab:AddToggle({Name = "Infinite Jump", Default = false, Callback = function(v) _G.InfJump = v end})
+
+-- [[ 4. TELEPORT TAB ]] --
+local TPTab = Window:MakeTab({Name = "Teleport", Icon = "rbxassetid://18209575418"})
+local TpSec = TPTab:AddSection({Name = "Targeting"})
+
+local function GetPlayers()
+    local p = {}
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= game.Players.LocalPlayer then table.insert(p, v.Name) end
+    end
+    return p
+end
+
+local PlayerDrop = TpSec:AddDropdown({
+    Name = "Select Player",
+    Options = GetPlayers(),
+    Callback = function(v) SelectedOpponent = v end
+})
+
+TpSec:AddButton({Name = "Refresh Player List", Callback = function() PlayerDrop:Refresh(GetPlayers(), true) end})
+TpSec:AddButton({Name = "Teleport to Player", Callback = function()
+    local target = game.Players:FindFirstChild(SelectedOpponent)
+    if target and target.Character then
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+    end
+end})
+
+-- [[ 5. CONFIG TAB ]] --
+local ConfigTab = Window:MakeTab({Name = "Config", Icon = "rbxassetid://84405778323802"})
+ConfigTab:AddButton({Name = "Reset Everything", Callback = function()
+    _G.NoRecoil = false; _G.SpeedEnabled = false; _G.Noclip = false; _G.Hitbox = false; _G.ESP = false;
+    pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16 end)
+    workspace.CurrentCamera.FieldOfView = 70
+    OrionLib:MakeNotification({Name="Xeno", Content="Settings Reset!", Time=2})
+end})
+ConfigTab:AddButton({Name = "Delete Config", Callback = function() if isfile("MVSD_Xeno_Configs/Config.json") then delfile("MVSD_Xeno_Configs/Config.json") end end})
+ConfigTab:AddButton({Name = "Destroy UI", Callback = function() OrionLib:Destroy() end})
+
+-- [[ CORE SYSTEMS ]] --
+local LP = game.Players.LocalPlayer
+local ShootRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):FindFirstChild("ShootGun")
+
+local OldNamecall; OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    if self == ShootRemote and getnamecallmethod() == "FireServer" then
+        if _G.MassShoot > 1 then
+            for i = 1, _G.MassShoot - 1 do ShootRemote:FireServer(unpack(args)) end
+        end
+    end
+    return OldNamecall(self, ...)
+end)
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if _G.NoRecoil then
+            for _, v in pairs(getgc(true)) do
+                if type(v) == "table" and rawget(v, "Recoil") then
+                    v.Recoil = 0
+                end
+            end
+        end
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+        if _G.SpeedEnabled then 
+            LP.Character.Humanoid.WalkSpeed = _G.SpeedValue 
+        end
+        if _G.Noclip then
+            for _, v in pairs(LP.Character:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = false end
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        local color = _G.RainbowESP and Color3.fromHSV(tick() % 5 / 5, 1, 1) or Color3.fromRGB(0, 170, 255)
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = p.Character.HumanoidRootPart
+                if _G.Hitbox then
+                    hrp.Size = Vector3.new(_G.HSize, _G.HSize, _G.HSize)
+                    hrp.Transparency = 0.7
+                else
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
+                end
+                local b = hrp:FindFirstChild("EliteBox") or Instance.new("BoxHandleAdornment", hrp)
+                b.Name = "EliteBox"; b.Adornee = hrp; b.AlwaysOnTop = true;
+                b.Size = _G.Hitbox and Vector3.new(_G.HSize, _G.HSize, 0.1) or Vector3.new(4, 6, 0.1)
+                b.Color3 = color; b.Transparency = _G.ESP and 0.5 or 1
+            end
+        end
+    end
+end)
+
+OrionLib:Init()
